@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4x4 Tic-Tac-Toe - Local Multiplayer or vs Bot</title>
+    <style>
+        /* Same styles as before */
+        body {
+            background-color: #333;
+            color: #ffcc00;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+            text-shadow: 2px 2px #000;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #555;
+            color: #ffcc00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            font-weight: bold;
+            border: 3px solid #ffcc00;
+            transition: background-color 0.3s;
+        }
+        .cell:hover {
+            background-color: #777;
+        }
+        .timer {
+            color: #ffcc00;
+            font-size: 24px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #444;
+            color: #ffcc00;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #666;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            grid-template-rows: repeat(4, 100px);
+            gap: 15px;
+            margin: 20px auto;
+            justify-content: center;
+        }
+        #status {
+            font-size: 1.5em;
+            margin: 20px 0;
+        }
+        .winning-cell {
+            background-color: orange;
+        }
+        #modeSelect {
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>4x4 Tic-Tac-Toe</h1>
+        <div id="modeSelect">
+            <button id="multiplayerBtn">Multiplayer</button>
+            <button id="botBtn">Play vs Bot</button>
+        </div>
+        <div id="timer" class="timer" style="display: none;"></div>
+        <div id="board"></div>
+        <div id="status"></div>
+        <button id="restartBtn" style="display: none;">Restart Game</button>
+    </div>
+
+    <script>
+        let board = [];
+        let currentPlayer = 'X';
+        let timeout;
+        let timeLeft = 10;
+        let isBotPlaying = false;
+        let gameMode = 'multiplayer'; // Default game mode is multiplayer
+
+        const boardElement = document.getElementById("board");
+        const statusElement = document.getElementById("status");
+        const restartBtn = document.getElementById("restartBtn");
+        const modeSelect = document.getElementById("modeSelect");
+
+        document.getElementById("multiplayerBtn").addEventListener("click", () => {
+            gameMode = 'multiplayer';
+            modeSelect.style.display = 'none';
+            startGame();
+        });
+
+        document.getElementById("botBtn").addEventListener("click", () => {
+            gameMode = 'bot';
+            modeSelect.style.display = 'none';
+            startGame();
+        });
+
+        function startGame() {
+            createBoard();
+            statusElement.style.display = 'block';
+            boardElement.style.display = 'grid';
+            statusElement.textContent = `Player ${currentPlayer}'s turn`;
+            restartBtn.style.display = 'block';
+            startTimer();
+        }
+
+        function createBoard() {
+            board = Array.from(Array(4), () => Array(4).fill(''));
+            boardElement.innerHTML = '';
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    const cell = document.createElement("div");
+                    cell.classList.add("cell");
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener("click", handleCellClick);
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(event) {
+            const row = event.target.dataset.row;
+            const col = event.target.dataset.col;
+
+            if (board[row][col] !== '' || checkWin(currentPlayer).winner || isBotPlaying) return;
+
+            board[row][col] = currentPlayer;
+            event.target.textContent = currentPlayer;
+            event.target.classList.add(currentPlayer === 'X' ? 'x' : 'o');
+
+            if (checkWin(currentPlayer).winner) {
+                statusElement.textContent = `Player ${currentPlayer} wins!`;
+                clearTimeout(timeout);
+                highlightWinningCells(currentPlayer);
+                return;
+            } else if (board.flat().every(cell => cell !== '')) {
+                statusElement.textContent = "It's a draw!";
+                clearTimeout(timeout);
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            statusElement.textContent = `Player ${currentPlayer}'s turn`;
+
+            if (gameMode === 'bot' && currentPlayer === 'O') {
+                isBotPlaying = true;
+                setTimeout(botMove, 1000);  // Simulate bot thinking
+            } else {
+                startTimer();
+            }
+        }
+
+        function checkWin(player) {
+            for (let i = 0; i < 4; i++) {
+                if (board[i].every(cell => cell === player)) {
+                    return { winner: true, type: 'row', index: i };
+                }
+                if (board.map(row => row[i]).every(cell => cell === player)) {
+                    return { winner: true, type: 'column', index: i };
+                }
+            }
+            if (board.map((row, index) => row[index]).every(cell => cell === player)) {
+                return { winner: true, type: 'diagonal', index: 0 };
+            }
+            if (board.map((row, index) => row[3 - index]).every(cell => cell === player)) {
+                return { winner: true, type: 'diagonal', index: 1 };
+            }
+            return { winner: false };
+        }
+
+        function highlightWinningCells(player) {
+            const winningCells = checkWin(player);
+            if (winningCells.winner) {
+                if (winningCells.type === 'row') {
+                    for (let j = 0; j < 4; j++) {
+                        const cellElement = boardElement.children[winningCells.index * 4 + j];
+                        cellElement.classList.add('winning-cell');
+                    }
+                } else if (winningCells.type === 'column') {
+                    for (let i = 0; i < 4; i++) {
+                        const cellElement = boardElement.children[i * 4 + winningCells.index];
+                        cellElement.classList.add('winning-cell');
+                    }
+                } else if (winningCells.type === 'diagonal') {
+                    if (winningCells.index === 0) {
+                        for (let i = 0; i < 4; i++) {
+                            const cellElement = boardElement.children[i * 4 + i];
+                            cellElement.classList.add('winning-cell');
+                        }
+                    } else {
+                        for (let i = 0; i < 4; i++) {
+                            const cellElement = boardElement.children[i * 4 + (3 - i)];
+                            cellElement.classList.add('winning-cell');
+                        }
+                    }
+                }
+            }
+        }
+
+        function botMove() {
+            let emptyCells = [];
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    if (board[i][j] === '') {
+                        emptyCells.push({ row: i, col: j });
+                    }
+                }
+            }
+
+            const randomMove = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            board[randomMove.row][randomMove.col] = 'O';
+            const cellElement = boardElement.children[randomMove.row * 4 + randomMove.col];
+            cellElement.textContent = 'O';
+            cellElement.classList.add('o');
+
+            if (checkWin('O').winner) {
+                statusElement.textContent = "Player O wins!";
+                clearTimeout(timeout);
+                highlightWinningCells('O');
+                return;
+            } else if (board.flat().every(cell => cell !== '')) {
+                statusElement.textContent = "It's a draw!";
+                clearTimeout(timeout);
+                return;
+            }
+
+            currentPlayer = 'X';
+            statusElement.textContent = `Player ${currentPlayer}'s turn`;
+            isBotPlaying = false;
+            startTimer();
+        }
+
+        function startTimer() {
+            clearTimeout(timeout);
+            timeLeft = 10;
+            const timerDisplay = document.getElementById("timer");
+            timerDisplay.style.display = 'block';
+            timerDisplay.textContent = `Time Left: ${timeLeft}s`;
+
+            timeout = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `Time Left: ${timeLeft}s`;
+
+                if (timeLeft <= 0) {
+                    clearTimeout(timeout);
+                    statusElement.textContent = `Player ${currentPlayer} took too long!`;
+                    alert(`Player ${currentPlayer} loses due to time out!`);
+                    restartBtn.style.display = 'block';
+                    boardElement.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        restartBtn.addEventListener("click", () => {
+            clearTimeout(timeout);
+            boardElement.style.display = 'none';
+            statusElement.style.display = 'none';
+            restartBtn.style.display = 'none';
+            currentPlayer = 'X';
+            isBotPlaying = false;
+            modeSelect.style.display = 'block'; // Show mode selection again
+        });
+
+        // Initial mode selection screen
+        modeSelect.style.display = 'block';
+    </script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiplayer Chess</title>
+    <link rel="stylesheet" href="chess.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        #playerInfo {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #gameStatus {
+            text-align: center;
+            margin: 10px 0;
+            color: #666;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+<div id="startscene" class="scene show">
+    <div class="scene-content" style="margin-top: 15vh;">
+        <div id="connectionStatus">Connecting to room...</div>
+        <div id="playerInfo"></div>
+        <div id="gameStatus"></div>
+        <div class="button-container">
+            <button id="startButton" class="button" disabled>Start Game</button>
+            <button id="flipButton" class="button" onclick="boardAnimate()">Flip Board</button>
+        </div>
+    </div>
+    <div class="overlay"></div>
+</div>
+
+<div id="endscene" class="scene">
+    <p class="scene-content winning-sign"></p>
+    <div class="overlay"></div>
+</div>
+
+<div class="board-container">
+    <div id="board">
+        <div id="final" class="odd">
+            <div id="81" class="square" data-square="8-a">
+                <img class="piece rook" id="blackRook1" src="img/black-rook.webp">
+            </div>
+            <div id="82" class="square" data-square="8-b">
+                <img class="piece knight" id="blackKnight1" src="img/black-knight.webp">
+            </div>
+            <div id="83" class="square" data-square="8-c">
+                <img class="piece bishop" id="blackBishop1" data-color="black" src="img/black-bishop.webp">
+            </div>
+            <div id="84" class="square" data-square="8-d">
+                <img class="piece bking" id="blackQueen" data-color="black" src="img/black-queen.webp">
+            </div>
+            <div id="85" class="square" data-square="8-e">
+                <img class="piece bking" id="blackKing" data-color="black" src="img/black-king.webp">
+            </div>
+            <div id="86" class="square" data-square="8-f">
+                <img class="piece bishop" id="blackBishop2" data-color="black" src="img/black-bishop.webp">
+            </div>
+            <div id="87" class="square" data-square="8-g">
+                <img class="piece bking" id="blackKnight2" data-color="black" src="img/black-knight.webp">
+            </div>
+            <div id="88" class="square" data-square="8-h">
+                <img class="piece rook" id="blackRook2" src="img/black-rook.webp">
+            </div>
+        </div>
+        <!-- Rest of the board rows would go here -->
+    </div>
+    <p id="turn">White's Turn</p>
+    <div class="semataries">
+        <div id="whiteSematary" class="sematary">
+            <div class="pawn"></div>
+            <div class="knight"></div>
+            <div class="bishop"></div>
+            <div class="rook"></div>
+            <div class="queen"></div>
+        </div>
+        <div id="blackSematary" class="sematary">
+            <div class="pawn"></div>
+            <div class="knight"></div>
+            <div class="bishop"></div>
+            <div class="rook"></div>
+            <div class="queen"></div>
+        </div>
+    </div>
+</div>
+<!-- Add this to chess.html if missing -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="piece.js"></script>
+<script type="text/javascript" src="History.js"></script>
+<script type="text/javascript" src="Game.js"></script>
+<script type="text/javascript" src="SimulationGame.js"></script>
+<script type="text/javascript" src="ai.js"></script>
+<script type="text/javascript" src="Board.js"></script>
+
+<script>
+    // Game state variables
+    let socket;
+    let roomId;
+    let isLeader = false;
+    let playerColor = null;
+    let gameStarted = false;
+    let opponentConnected = false;
+    let currentFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get room ID from URL
+        roomId = new URLSearchParams(window.location.search).get('room');
+        
+        // Connect to Socket.io server
+        socket = io('http://localhost:3001', {
+        reconnectionAttempts: 5,
+        timeout: 10000
+    });
+        socket.on('connect', () => {
+        console.log('Connected to server');
+        updateConnectionStatus('Connected to server');
+        
+        if (roomId) {
+            updateConnectionStatus(`Joining room ${roomId}...`);
+            socket.emit('joinRoom', roomId);
+        } else {
+            updateConnectionStatus('Error: No room ID specified', true);
+        }
+    });
+
+    socket.on('connect_error', (err) => {
+        console.error('Connection error:', err);
+        updateConnectionStatus('Connection failed: ' + err.message, true);
+        setTimeout(() => socket.connect(), 5000); // Reconnect after 5 seconds
+    });
+
+        // Join the room if ID exists
+        if (roomId) {
+            updateConnectionStatus('Joining room...');
+            socket.emit('joinRoom', roomId);
+        } else {
+            updateConnectionStatus('No room specified', true);
+        }
+
+        // Setup socket event handlers
+        setupSocketHandlers();
+        
+        // Setup game hooks
+        setupGameHooks();
+        
+        // Setup button handlers
+        document.getElementById('startButton').addEventListener('click', startGame);
+    });
+
+    function setupSocketHandlers() {
+        // Handle player role assignment
+        socket.on('playerRole', function(data) {
+            isLeader = data.isLeader;
+            playerColor = data.color;
+            updatePlayerInfo();
+            
+            if (isLeader) {
+                updateGameStatus('Waiting for opponent to join...');
+            } else {
+                updateGameStatus('Waiting for leader to start the game...');
+            }
+            
+            // Notify parent React component
+            if (window.parent) {
+                window.parent.postMessage({
+                    type: 'PLAYER_ROLE',
+                    isLeader: isLeader,
+                    color: playerColor
+                }, '*');
+            }
+        });
+
+        // Handle when both players are ready
+        socket.on('playersReady', function(data) {
+            opponentConnected = true;
+            updateGameStatus('Ready to start!');
+            
+            if (isLeader) {
+                document.getElementById('startButton').disabled = false;
+            }
+            
+            // Notify parent React component
+            if (window.parent) {
+                window.parent.postMessage({
+                    type: 'PLAYERS_READY'
+                }, '*');
+            }
+        });
+
+        // Handle game start
+        socket.on('gameStarted', function(data) {
+            gameStarted = true;
+            currentFen = data.fen;
+            
+            // Load initial FEN position
+            if (typeof Game !== 'undefined' && typeof Game.loadFEN === 'function') {
+                Game.loadFEN(currentFen);
+            }
+            
+            // Hide start scene
+            document.getElementById('startscene').classList.remove('show');
+            
+            // Notify parent React component
+            if (window.parent) {
+                window.parent.postMessage({
+                    type: 'GAME_STARTED'
+                }, '*');
+            }
+        });
+
+        // Handle FEN updates from opponent
+        socket.on('fenUpdate', function(fen) {
+            currentFen = fen;
+            if (gameStarted && typeof Game !== 'undefined' && typeof Game.loadFEN === 'function') {
+                Game.loadFEN(fen);
+                updateTurnDisplay();
+            }
+        });
+
+        // Handle opponent disconnection
+        socket.on('playerLeft', function(color) {
+            opponentConnected = false;
+            gameStarted = false;
+            alert(`Opponent (${color}) has left the game`);
+            
+            // Show start scene again
+            document.getElementById('startscene').classList.add('show');
+            updateGameStatus('Opponent disconnected');
+            document.getElementById('startButton').disabled = true;
+            
+            // Notify parent React component
+            if (window.parent) {
+                window.parent.postMessage({
+                    type: 'PLAYER_LEFT',
+                    color: color
+                }, '*');
+            }
+        });
+
+        // Handle errors
+        socket.on('error', function(message) {
+            alert(message);
+            updateConnectionStatus(message, true);
+        });
+    }
+
+    function setupGameHooks() {
+        // Hook into the Game object to send FEN updates
+        if (typeof Game !== 'undefined') {
+            // Override makeMove to send updates
+            const originalMakeMove = Game.makeMove;
+            Game.makeMove = function(from, to) {
+                const result = originalMakeMove.call(this, from, to);
+                
+                // Only send updates if game is started and it's our turn
+                if (gameStarted && Game.turn === (playerColor === 'white' ? 'w' : 'b')) {
+                    const fen = Game.getFEN();
+                    socket.emit('fenUpdate', { roomId, fen });
+                }
+                
+                updateTurnDisplay();
+                return result;
+            };
+            
+            // Override init to handle color properly
+            const originalInit = Game.init;
+            Game.init = function() {
+                const result = originalInit.call(this);
+                
+                // If we're black, flip the board
+                if (playerColor === 'black') {
+                    boardAnimate();
+                }
+                
+                updateTurnDisplay();
+                return result;
+            };
+        } else {
+            // Try again if Game isn't loaded yet
+            setTimeout(setupGameHooks, 100);
+        }
+    }
+
+    function startGame() {
+        if (isLeader && roomId) {
+            socket.emit('startGame', roomId);
+            document.getElementById('startButton').disabled = true;
+        }
+    }
+
+    function updateConnectionStatus(message, isError = false) {
+    const statusElement = document.getElementById('connectionStatus');
+    if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.style.color = isError ? 'red' : 'white';
+        statusElement.style.fontWeight = isError ? 'bold' : 'normal';
+        
+        if (isError) {
+            statusElement.innerHTML += '<br><button onclick="window.location.reload()">Retry</button>';
+        }
+    }
+}
+
+    function updatePlayerInfo() {
+        const infoElement = document.getElementById('playerInfo');
+        if (infoElement && playerColor) {
+            infoElement.textContent = `You are playing as: ${playerColor.toUpperCase()} ${isLeader ? '(Leader)' : ''}`;
+            infoElement.style.color = playerColor === 'white' ? '#333' : '#888';
+        }
+    }
+
+    function updateGameStatus(message) {
+        const statusElement = document.getElementById('gameStatus');
+        if (statusElement) {
+            statusElement.textContent = message;
+        }
+    }
+
+    function updateTurnDisplay() {
+        const turnElement = document.getElementById('turn');
+        if (turnElement && typeof Game !== 'undefined') {
+            const turn = Game.turn === 'w' ? "WHITE'S TURN" : "BLACK'S TURN";
+            turnElement.textContent = turn;
+            
+            // Highlight if it's our turn
+            const ourTurn = (Game.turn === 'w' && playerColor === 'white') || 
+                           (Game.turn === 'b' && playerColor === 'black');
+            turnElement.style.fontWeight = ourTurn ? 'bold' : 'normal';
+            turnElement.style.color = ourTurn ? '#4CAF50' : '#333';
+        }
+    }
+
+    // Original board animation function
+    const boardAnimate = () => {
+        const board = document.getElementById('board');
+        const elements = board.getElementsByClassName('piece');
+        if (board.classList.contains('animate')) {
+            board.classList.remove('animate');
+            board.classList.add('animate-backward');
+            for (let element of elements) {
+                element.classList.remove('forward');
+                element.classList.add('backward');
+            }
+        }
+        else {
+            board.classList.remove('animate-backward');
+            board.classList.add('animate');
+            for (let element of elements) {
+                element.classList.remove('backward');
+                element.classList.add('forward');
+            }
+        }    
+    };
+
+    // Listen for messages from parent React component
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'START_GAME') {
+            startGame();
+        }
+    });
+</script>
+</body>
+</html>
