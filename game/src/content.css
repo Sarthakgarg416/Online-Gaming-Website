@@ -1,0 +1,39 @@
+/* GameContent.css */
+
+/* Game Content Styling */
+.game-content {
+    margin-top: 40px;
+    padding: 40px;
+    background-color: #1f1f1f; /* Dark background for the game content */
+    width: 80%;
+    margin: 20px auto;
+    border-radius: 15px;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
+}
+
+.game-content p {
+    font-size: 1.5em;
+}
+
+/* Add button styles for games */
+.game-button {
+    display: inline-block;
+    background-color: #f0a500; /* Button color for games */
+    color: #161616;
+    padding: 15px 30px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.game-button:hover {
+    background-color: #e94560; /* Change color on hover */
+    color: #fff;
+}
+
+/* Add transition effects for hover interactions */
+input, button, .game-button {
+    transition: 0.3s ease;
+}

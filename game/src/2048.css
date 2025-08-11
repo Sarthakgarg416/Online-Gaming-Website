@@ -1,0 +1,144 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Papyrus', 'Segoe UI', sans-serif;
+    /* background-image: url('https://i.imgur.com/VrBbbZk.jpg'); */
+    background-size: cover;
+    color: #d4af37;
+    text-align: center;
+}
+
+#game-container {
+    display: inline-block;
+    margin: 40px auto;
+    background-color: #6b4f1a;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+#grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 100px);
+    grid-gap: 15px;
+}
+
+.tile {
+    background-color: #c2b280;
+    width: 100px;
+    height: 100px;
+    font-size: 32px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b4f1a;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+#score-board {
+    margin-top: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    background-color: #8b5e3c;
+    color: white;
+    border: none;
+    border-radius: 10px;
+}
+
+button:hover {
+    background-color: #6b4f1a;
+}
+
+#superpowers {
+    margin-top: 20px;
+}
+
+.mythical-title {
+    color: #f7d794;
+    text-shadow: 2px 2px #000;
+}
+
+/* New CSS for React JS grid */
+.tile {
+    background-color: #c2b280;
+    width: 100px;
+    height: 100px;
+    font-size: 32px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b4f1a;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.tile-2 {
+    background-color: #f0e5de;
+}
+
+.tile-4 {
+    background-color: #ede1d4;
+}
+
+.tile-8 {
+    background-color: #f5b27f;
+}
+
+.tile-16 {
+    background-color: #f49d6e;
+}
+
+.tile-32 {
+    background-color: #f28360;
+}
+
+.tile-64 {
+    background-color: #f15b44;
+}
+
+.tile-128 {
+    background-color: #f3d677;
+}
+
+.tile-256 {
+    background-color: #f2d065;
+}
+
+.tile-512 {
+    background-color: #f2c94d;
+}
+
+.tile-1024 {
+    background-color: #e1b938;
+}
+
+.tile-2048 {
+    background-color: #e3aa19;
+}
+
+#superpowers button {
+    display: inline-block;
+    padding: 10px;
+    margin-top: 20px;
+    background-color: #8b5e3c;
+    color: white;
+    border: none;
+    border-radius: 10px;
+}
+
+#superpowers button:hover {
+    background-color: #6b4f1a;
+}

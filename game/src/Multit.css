@@ -1,0 +1,83 @@
+/* Container for the MultiTicTacToe component */
+.multi-tic-tac-toe {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #333;
+  color: #FFD700;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 20px;
+}
+
+/* Styling for the board container */
+.multi-tic-tac-toe .board-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+}
+
+/* Styling for the board */
+.multi-tic-tac-toe .board {
+  display: grid;
+  grid-template-columns: repeat(4, 80px);
+  grid-gap: 5px;
+  justify-content: center;
+  margin: 20px auto;
+}
+
+/* Styling for individual cells */
+.multi-tic-tac-toe .cell {
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
+  font-weight: bold;
+  background-color: #555;
+  color: #FFD700;
+  border: 2px solid #FFD700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Disabled cell styling */
+.multi-tic-tac-toe .cell:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Winning cell highlight */
+.multi-tic-tac-toe .cell.win {
+  background-color: orange !important;
+}
+
+/* Restart button styling */
+.multi-tic-tac-toe .restart {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  background-color: #FFD700;
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* Additional styling for headers */
+.multi-tic-tac-toe h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px #000;
+}
+
+.multi-tic-tac-toe h2, .multi-tic-tac-toe h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}

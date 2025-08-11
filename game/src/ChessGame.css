@@ -1,0 +1,309 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background: #ddd;
+	font-family: Arial, sans-serif;
+}
+
+.chess-game {
+	padding: 20px 0;
+}
+
+.board-container {
+	width: 600px;
+	max-width: 90%;
+    justify-content: center;
+	margin: auto;
+	position: relative;
+}
+
+.semataries {
+	width: 100%;
+	margin: auto;
+	display: flex;
+    justify-content: center;
+}
+
+.sematary {
+	width: 50%;
+	display: flex;
+	flex-wrap: wrap;
+}
+
+#blackSematary {
+	text-align: right;
+	justify-content: flex-end;
+}
+
+#board {
+	aspect-ratio: 1 / 1;
+	margin: auto;
+	border: 3px #333 solid;
+	display: flex;
+	flex-direction: column;
+}
+
+#board > div {
+	display: flex;
+	width: 100%;
+	height: 12.5%;
+}
+
+#board div div.square {
+	width: 12.5%;
+	height: 100%;
+	box-sizing: border-box;
+	border: #000 solid 1px;
+	position: relative;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#board .even div:nth-child(even) {
+	background: #ccd;
+}
+
+#board .even div:nth-child(odd) {
+	background: rgb(112,112,112);
+}
+
+#board .odd div:nth-child(even) {
+	background: rgb(112,112,112);
+}
+
+#board .odd div:nth-child(odd) {
+	background: #ccd;
+}
+
+.animate {
+	animation: rotateBoard 1s ease-out;
+	animation-fill-mode: both;
+}
+
+@keyframes rotateBoard { 
+  0% {
+    transform: rotateZ(0);
+  }
+  100% {
+  	transform: rotateZ(-180deg);
+  }
+}
+
+.forward {
+	transform: rotateZ(-180deg);
+}
+
+.backward {
+	transform: rotateZ(0);
+}
+
+.piece {
+	width: 80%;
+	height: 80%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	transition: transform 0.2s ease;
+}
+
+/* Image-based pieces */
+.piece-image {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 2;
+}
+
+/* Only show fallback when image fails to load */
+.piece-image:not([src=""]) + .piece-fallback {
+	display: none;
+}
+
+.piece-fallback {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	font-weight: bold;
+	font-size: 24px;
+    z-index: 1;
+}
+
+.piece.white .piece-fallback {
+	background-color: #fff;
+	color: #000;
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.piece.black .piece-fallback {
+	background-color: #000;
+	color: #fff;
+	box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+/* Remove the Unicode symbols since we're now using images */
+.piece:after {
+	content: none !important;
+}
+
+.allowed {
+	position: relative;
+}
+
+.allowed::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 25%;
+	height: 25%;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.3);
+    z-index: 1;
+}
+
+.allowed:hover {
+	background: radial-gradient(#555, #333) !important;
+}
+
+.clicked-square {
+	background: radial-gradient(#333, #222) !important;
+}
+
+.check {
+	background: rgba(255, 0, 0, 0.5) !important;
+}
+
+/* Captured pieces styling with images */
+.captured-container {
+    width: 30px;
+    height: 30px;
+    margin: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.captured-piece {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.scene {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	display: none;
+	z-index: 1000;
+}
+
+.overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: #000;
+	opacity: .7;
+	z-index: 1001;
+}
+
+.scene .scene-content {
+	position: fixed;
+	color: #fff;
+	z-index: 1002;
+	width: 100%;
+    text-align: center;
+    margin-top: 40vh;
+    font-size: 40px;
+	height: 100vh;
+}
+
+.scene-content h2 {
+	font-weight: 500;
+	margin-bottom: 15px;
+}
+
+@media screen and (max-width: 600px) {
+	.scene-content h2 {
+		font-size: 2rem;
+	}
+}
+
+.show {
+	display: block !important;
+	animation: showMessage 1s ease-out;
+	animation-fill-mode: both;
+}
+
+.hidden {
+	display: none;
+}
+
+@keyframes showMessage { 
+  0% {
+  	opacity: 0;
+  }
+  100% {
+  	opacity: 1;
+  }
+}
+
+#turn {
+	text-align: center;
+	font-size: 18px;
+	margin: 10px 0;
+	font-weight: bold;
+}
+
+.winning-sign:first-letter {
+	text-transform: uppercase;
+}
+
+.flip-board, .button {
+	padding: 10px 20px;
+    border-radius: 5px !important;
+    outline: 0;
+    background: #7f979e;
+    color: white;
+    border: 0;
+	cursor: pointer;
+}
+
+.flip-board:hover, .button:hover {
+	background: #6a8088;
+}
+
+.button {
+	background-color: rgb(112,112,112);
+	border-radius: 10px;
+	border: none;
+	color: white;
+	padding: 12px 20px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 16px;
+	cursor: pointer;
+}
+
+.button-big {
+	padding: 30px 60px;
+	font-size: 25px;
+}
